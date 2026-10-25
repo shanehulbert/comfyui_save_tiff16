@@ -4,6 +4,52 @@ A ready-to-run kit for upscaling **AI-generated images** to **exhibition print s
 
 One command sets up a fresh pod. You load the workflow, add your image and press Run.
 
+## Quick start
+
+### 1. Start a pod on RunPod
+
+- **GPU:** RTX PRO 6000 (96 GB VRAM). Large print sizes need at least 96 GB.
+- **Template:** the official **ComfyUI** template
+- **Container disk:** raise it to **80 GB** (the SeedVR2 7B model alone is about 15 GB)
+- Click **Deploy** and wait until the pod shows **Running**
+
+### 2. Run the setup command
+
+On the pod, click **Connect → JupyterLab**, then **File → New → Terminal**. Paste this and press Enter:
+
+```bash
+curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | bash
+```
+
+Wait until it prints **DONE**.
+
+### 3. Restart ComfyUI
+
+Open ComfyUI (**Connect → ComfyUI**, port 8188), click **Manager → Restart**, wait about 30 seconds, then refresh the browser.
+
+> ComfyUI opens with its own example workflow first. You can ignore it, along with any red boxes on it.
+
+### 4. Open the workflow
+
+Click **Workflows** in the left toolbar and open **SeedVR2_AI to 94cm_res8944**. You should see three labelled groups and no red nodes.
+
+### 5. Add your image and set the size
+
+1. In **Load Image**, click **choose file to upload** and pick your image (PNG). Load Image opens with ComfyUI's `example.png` as a placeholder.
+2. The **resolution** is already set for the workflow's print size. Change it only for a different size. See [Choosing the resolution](#choosing-the-resolution).
+3. Click **Run**.
+
+The first run downloads the models (about 15 GB, a few minutes). Later runs start straight away.
+
+### 6. Download your files
+
+- **16-bit TIFF (your print master):** **Connect → JupyterLab**, open **runpod-slim → ComfyUI → output**, right-click the `.tif` and choose **Download**. It doesn't appear in ComfyUI's Assets panel.
+- **PNG backup:** in ComfyUI's **Assets** panel.
+
+### 7. Stop the pod
+
+**Stop the pod when you're finished.** You're billed for every minute it's running.
+
 **What's in this repo**
 
 | File | What it does |
