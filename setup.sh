@@ -1,7 +1,7 @@
 #!/bin/bash
 # ------------------------------------------------------------------
 # RunPod ComfyUI setup — Shane's SeedVR2 print upscaling kit
-# Installs: 16-bit TIFF load/save nodes, SeedVR2 node pack, saved workflows
+# Installs: Save TIFF 16-bit node, SeedVR2 node pack, saved workflows
 # Run in the pod's terminal:
 #   curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | bash
 # ------------------------------------------------------------------
@@ -35,18 +35,7 @@ fi
 "$PY" -m pip install -q -r ComfyUI-SeedVR2_VideoUpscaler/requirements.txt
 echo ">> SeedVR2 installed"
 
-# 5. TIFF reading for the "Load Image 16-bit TIFF" node (+ LZW/ZIP support)
-"$PY" -m pip install -q tifffile imagecodecs
-mkdir -p "$COMFY/input"
-"$PY" - "$COMFY/input/example_16bit.tif" <<'PYEOF'
-import sys, numpy as np, tifffile
-g = np.linspace(0, 65535, 512, dtype=np.uint16)
-img = np.stack([np.tile(g, (256, 1)), np.tile(g[::-1], (256, 1)), np.full((256, 512), 32768, np.uint16)], -1)
-tifffile.imwrite(sys.argv[1], img, photometric="rgb")
-PYEOF
-echo ">> 16-bit TIFF support installed"
-
-# 6. Put workflows in ComfyUI's Workflows sidebar
+# 5. Put workflows in ComfyUI's Workflows sidebar
 if ls comfyui_save_tiff16/workflows/*.json >/dev/null 2>&1; then
   mkdir -p "$COMFY/user/default/workflows"
   cp comfyui_save_tiff16/workflows/*.json "$COMFY/user/default/workflows/"

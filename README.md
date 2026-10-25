@@ -1,6 +1,6 @@
 # SeedVR2 Print Upscaling Kit for ComfyUI (RunPod)
 
-A ready-to-run kit for upscaling images to **exhibition print size** with [SeedVR2](https://github.com/ByteDance-Seed/SeedVR) in ComfyUI on a rented [RunPod](https://www.runpod.io) GPU, then saving a **16-bit, colour-managed TIFF** ready for Photoshop and fine art printing.
+A ready-to-run kit for upscaling **AI-generated images** to **exhibition print size** with [SeedVR2](https://github.com/ByteDance-Seed/SeedVR) in ComfyUI on a rented [RunPod](https://www.runpod.io) GPU, then saving a **16-bit, colour-managed TIFF** ready for Photoshop and fine art printing.
 
 One command sets up a fresh pod. You load the workflow, add your image and press Run.
 
@@ -8,30 +8,24 @@ One command sets up a fresh pod. You load the workflow, add your image and press
 
 | File | What it does |
 |---|---|
-| `__init__.py` | Two custom ComfyUI nodes: **Save TIFF 16-bit (Colour Managed)**, which saves uncompressed 16-bit TIFFs in ProPhoto RGB, Adobe RGB (1998) or sRGB with the matching ICC profile embedded, and **Load Image 16-bit TIFF**, which loads camera TIFFs at full 16-bit precision |
-| `setup.sh` | Installs everything on a new pod: these nodes, the SeedVR2 node pack, TIFF support and the workflows |
-| `workflows/` | Ready-made workflows for AI images and camera files (see below) |
+| `__init__.py` | **Save TIFF 16-bit (Colour Managed)**, a custom ComfyUI node that saves uncompressed 16-bit TIFFs in ProPhoto RGB, Adobe RGB (1998) or sRGB with the matching ICC profile embedded |
+| `setup.sh` | Installs everything on a new pod: this node, the SeedVR2 node pack and the workflow |
+| `paste_command.md` | The one-line setup command, ready to copy |
+| `workflows/` | The ready-made workflow (see below) |
 
 ---
 
-## Choose your workflow
-
-Each workflow is named for **what goes in** and **the print that comes out**. Open the one that matches your image. The resolution is already set.
+## The workflow
 
 | Workflow | Input | Print (image area, 300 ppi) | Paper and border | resolution | Upscale | Status |
 |---|---|---|---|---|---|---|
-| **SeedVR2_AI to 94cm_res8944** | AI image: **Nano Banana 4K, 5:4** (4608 × 3712), PNG, sRGB | **94 × 75.7 cm** | 110 cm wide, 8 cm border | 8944 | 2.4× | ✅ Tested |
-| **SeedVR2_Camera to 94cm_res7408** | Camera photo: **any 3:2 camera**, 16-bit ProPhoto TIFF | **94 × 62.7 cm** | 110 cm wide, 8 cm border | 7408 | 1.2–1.9× (depends on camera) | ✅ Expected to work (under 99 MP) |
-| **SeedVR2_Camera to 135cm_res10640** | Camera photo: **any 3:2 camera**, 16-bit ProPhoto TIFF | **135 × 90 cm** | 110 × 155 cm, 10 cm border | 10640 | 1.7–2.7× (depends on camera) | ⚠️ Not yet tested (170 MP) |
-
-All three are sized for **44-inch (111.8 cm) roll paper** trimmed to 110 cm.
+| **SeedVR2_AI to 94cm_res8944** | AI image: **Nano Banana 4K, 5:4** (4608 × 3712), PNG, sRGB | **94 × 75.7 cm** | 110 cm wide (44" roll), 8 cm border | 8944 | 2.4× | ✅ Tested |
 
 **Critical:**
 
-- **Shape matters, not camera or pixel count.** The resolution fixes the output size, so the camera workflows give the same print size from any **3:2** camera (most Sony, Nikon, Canon, Fujifilm full-frame and APS-C bodies). Square, 4:5 or cropped images come out a different size. See [Choosing the resolution](#choosing-the-resolution).
-- **The AI workflow assumes Nano Banana's 4K 5:4 shape.** A 16:9 or 1:1 image at 8944 will **not** come out 94 cm wide.
-- **AI workflow = sRGB in.** **Camera workflows = 16-bit ProPhoto TIFF in.** Using the wrong one gives wrong colours (see [Colour management](#colour-management-important)).
-- **Print size is fixed. Upscale isn't.** A smaller-megapixel camera needs a bigger upscale to reach the same print, and SeedVR2 invents more detail the further it's pushed.
+- **For AI-generated images only.** Don't use it for camera photographs. See [Camera photographs](#camera-photographs-use-a-conventional-upscaler).
+- **It assumes Nano Banana's 4K 5:4 shape.** A 16:9 or 1:1 image at 8944 will **not** come out 94 cm wide. See [Choosing the resolution](#choosing-the-resolution).
+- **sRGB in** (PNG, as AI tools output it), **16-bit ProPhoto TIFF out**.
 
 ---
 
@@ -72,11 +66,11 @@ Open ComfyUI (**Connect → ComfyUI**, port 8188), click **Manager → Restart**
 
 ### 4. Open the workflow
 
-Click **Workflows** in the left toolbar and open the workflow that matches your image (see [Choose your workflow](#choose-your-workflow)). You should see three labelled groups and no red nodes.
+Click **Workflows** in the left toolbar and open **SeedVR2_AI to 94cm_res8944**. You should see three labelled groups and no red nodes.
 
 ### 5. Add your image and set the size
 
-1. In **Load Image** (AI workflow) or **Load Image 16-bit TIFF** (camera workflows), click **choose file to upload** and pick your image. For camera TIFFs, see [Camera files](#camera-files-born-digital-tiffs) if the upload button won't accept them.
+1. In **Load Image**, click **choose file to upload** and pick your image (PNG). Load Image opens with ComfyUI's `example.png` as a placeholder.
 2. The **resolution** is already set for the workflow's print size. Change it only for a different size. See [Choosing the resolution](#choosing-the-resolution).
 3. Click **Run**.
 
@@ -143,40 +137,16 @@ The result needs no resizing in Photoshop: it's already exactly 300 ppi at print
 
 ---
 
-## Camera files (born-digital TIFFs)
+## Camera photographs: use a conventional upscaler
 
-For real photographs, e.g. RAW files processed in Lightroom, use the **SeedVR2_Camera** workflows. They use the **Load Image 16-bit TIFF** node, which reads your file at full 16-bit precision, and keep it in **ProPhoto RGB** from start to finish, with no conversion and no clipping.
+SeedVR2 is a **generative** upscaler: it invents plausible detail. That's ideal for AI images, which have no "true" detail to betray. With **real photographs**, and especially **people**, it gets this wrong:
 
-**Export from Lightroom:** TIFF · **16-bit** · compression None or ZIP · colour space **ProPhoto RGB** · no resizing.
+- **It invents texture.** Tested on a 42 MP portrait at 1.4×, it deepened and multiplied wrinkles, turned skin into a crepe-like texture, made the eyes glassy and added hair strands. The person looked older and harsher, as a different rendering rather than more detail.
+- **It shifts colour.** SeedVR2 only understands sRGB. Wide-gamut camera files (ProPhoto, Adobe RGB) come out flat and colour-shifted.
 
-**Getting the TIFF in:** use **choose file to upload** on the node. If it won't accept TIFFs, upload the file with JupyterLab to `runpod-slim → ComfyUI → input`, refresh ComfyUI and pick it from the list. The node preview may stay blank because browsers can't show TIFFs, which is fine. The console confirms the file's size, bit depth and profile.
+**For camera files, use a faithful, conventional upscaler instead,** e.g. **Topaz Gigapixel** with the **High Fidelity** or **Standard** model, Face Recovery **off**, sharpening and denoise low, and **16-bit TIFF** out with the original colour profile kept. Avoid generative modes such as Recover or Redefine for real photographs.
 
-**Save node:** `source_colour_space` **ProPhoto RGB** → `colour_profile` **ProPhoto RGB**.
-
-### Presets: any 3:2 camera on 44" roll
-
-| Workflow | Image size | Paper | Border | resolution | Output |
-|---|---|---|---|---|---|
-| **SeedVR2_Camera to 94cm_res7408** | 94 × 62.7 cm | 110 cm wide | 8 cm | **7408** | ~11,112 × 7,408 (82 MP) |
-| **SeedVR2_Camera to 135cm_res10640** | 135 × 90 cm | 110 × 155 cm | 10 cm | **10640** | ~15,960 × 10,640 (170 MP) |
-
-**How much each camera is upscaled** (same print size, different starting point):
-
-| Camera (3:2) | Native size | to 94 cm | to 135 cm |
-|---|---|---|---|
-| 24 MP (e.g. Sony A7 III, Nikon Z6, Canon R6) | 6000 × 4000 | 1.85× | 2.66× ⚠️ |
-| 33 MP (e.g. Sony A7 IV) | 7008 × 4672 | 1.59× | 2.28× |
-| 42 MP (e.g. Sony A7R II / A7R III) | 7952 × 5304 | 1.40× | 2.01× |
-| 45 MP (e.g. Nikon Z7, Canon R5) | 8256 × 5504 | 1.35× | 1.93× |
-| 61 MP (e.g. Sony A7R IV / A7R V) | 9504 × 6336 | 1.17× | 1.68× |
-
-Memory use depends on the **output** size, not the camera, so the 135 cm preset needs the same GPU memory from any camera. Above about 2.5× (⚠️), expect more invented detail. Check carefully at 100%.
-
-The 135 cm preset is **not yet tested**: it's 70% larger than the biggest proven run (99 MP). It ships with safer memory settings (blocks_to_swap 36, offload cpu, VAE decode tile 512). If it runs out of memory, rent an H200 (141 GB) for the job.
-
-**Other shapes or sizes:** resolution = image short edge in cm ÷ 2.54 × 300, rounded up to a multiple of 16.
-
-For camera files, faithfulness matters. If the **7B sharp** model makes texture look crunchy or invented, try the standard `seedvr2_ema_7b_fp16` model.
+> Same tool, same settings: one image improved, one person changed. It's a useful example of generative versus conventional upscaling, and of what "detail" means in a photograph.
 
 ---
 
@@ -184,7 +154,7 @@ For camera files, faithfulness matters. If the **7B sharp** model makes texture 
 
 ### Input
 
-ComfyUI treats **every input image as sRGB** and ignores embedded profiles. It also reads images as 8-bit.
+ComfyUI treats **every input image as sRGB** and ignores embedded profiles. It also reads images as 8-bit, which doesn't matter for SeedVR2: it generates a new image and works in floating point internally.
 
 - **Convert your image to sRGB before uploading.** In Photoshop: **Edit → Convert to Profile → sRGB IEC61966-2.1**, then save as PNG or TIFF.
 - If you upload a ProPhoto or Adobe RGB file without converting, the colours are converted twice and come out flat and desaturated.

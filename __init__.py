@@ -1,18 +1,15 @@
 """
-16-bit colour-managed TIFF nodes for ComfyUI
---------------------------------------------
-Save TIFF 16-bit (Colour Managed)
-    Saves uncompressed 16-bit RGB TIFFs in ProPhoto RGB, Adobe RGB (1998) or
-    sRGB with the matching ICC profile embedded. Converts from the source
-    colour space (sRGB by default, or ProPhoto / Adobe RGB for camera files).
-    Needs only numpy.
+Save TIFF 16-bit (Colour Managed) — ComfyUI custom node
+-------------------------------------------------------
+Saves uncompressed 16-bit RGB TIFFs in ProPhoto RGB, Adobe RGB (1998) or sRGB
+with the matching ICC profile embedded, so Photoshop / Lightroom / Capture One
+read the colour correctly. Converts from the source colour space (sRGB by
+default, which is what ComfyUI's Load Image and AI images use).
 
-Load Image 16-bit TIFF
-    Loads 8- or 16-bit TIFFs at full precision (ComfyUI's Load Image drops
-    to 8-bit) and reports the embedded ICC profile. Needs `tifffile`
-    (and `imagecodecs` for LZW/ZIP-compressed TIFFs).
+Self-contained: needs only numpy (already part of ComfyUI). No extra installs.
 
 Install: put this folder in ComfyUI/custom_nodes/ and restart ComfyUI.
+Find it under: image > save > "Save TIFF 16-bit (Colour Managed)".
 """
 
 import os
@@ -291,9 +288,8 @@ class SaveTIFF16ColourManaged:
             "optional": {
                 "source_colour_space": (["sRGB", "ProPhoto RGB", "Adobe RGB (1998)"], {
                     "default": "sRGB",
-                    "tooltip": "Colour space of the image coming in. sRGB for AI images and ComfyUI's "
-                               "Load Image. For camera TIFFs loaded with 'Load Image 16-bit TIFF', match "
-                               "the file's profile (e.g. ProPhoto RGB from Lightroom)."}),
+                    "tooltip": "Colour space of the image coming in. Leave on sRGB for AI images and "
+                               "anything loaded with ComfyUI's Load Image."}),
             },
         }
 
@@ -323,117 +319,5 @@ class SaveTIFF16ColourManaged:
         return {}
 
 
-# ---------------------------------------------------------------------------
-# Load Image 16-bit TIFF
-# ---------------------------------------------------------------------------
-
-def _profile_name(icc_bytes):
-    """Human-readable ICC profile description, or None."""
-    if not icc_bytes:
-        return None
-    try:
-        import io
-        from PIL import ImageCms
-        return ImageCms.getProfileDescription(ImageCms.ImageCmsProfile(io.BytesIO(icc_bytes))).strip()
-    except Exception:
-        return "unreadable profile"
-
-
-def _guess_space(name):
-    n = (name or "").lower()
-    if "prophoto" in n or "romm" in n:
-        return "ProPhoto RGB"
-    if "adobe rgb" in n or "adobergb" in n or "compatible with adobe" in n:
-        return "Adobe RGB (1998)"
-    if "srgb" in n:
-        return "sRGB"
-    return None
-
-
-def read_tiff(path):
-    """Return (float32 HxWx3 array 0..1, bit depth, ICC bytes or None)."""
-    try:
-        import tifffile
-    except ImportError:
-        raise RuntimeError("Load Image 16-bit TIFF needs the 'tifffile' package. "
-                           "Install it with: pip install tifffile imagecodecs")
-    with tifffile.TiffFile(path) as tf:
-        page = tf.pages[0]  # Photoshop/Lightroom store the flattened image first
-        if int(page.photometric) == 5:
-            raise ValueError("This TIFF is CMYK. Convert it to RGB in Photoshop first.")
-        tag = page.tags.get(34675)
-        icc = bytes(tag.value) if tag is not None else None
-        arr = page.asarray()
-
-    if arr.ndim == 3 and arr.shape[0] in (3, 4) and arr.shape[-1] not in (3, 4):
-        arr = np.moveaxis(arr, 0, -1)  # planar -> interleaved
-    if arr.ndim == 2:
-        arr = np.stack([arr] * 3, axis=-1)  # greyscale -> RGB
-    arr = arr[..., :3]  # drop alpha / extra channels
-
-    if arr.dtype == np.uint8:
-        bits, out = 8, arr.astype(np.float32) / 255.0
-    elif arr.dtype == np.uint16:
-        bits, out = 16, arr.astype(np.float32) / 65535.0
-    elif arr.dtype == np.uint32:
-        bits, out = 32, (arr.astype(np.float64) / 4294967295.0).astype(np.float32)
-    elif np.issubdtype(arr.dtype, np.floating):
-        bits, out = 32, np.clip(arr.astype(np.float32), 0.0, 1.0)
-    else:
-        raise ValueError(f"Unsupported TIFF data type: {arr.dtype}")
-    return np.ascontiguousarray(out), bits, icc
-
-
-class LoadImage16bitTIFF:
-    CATEGORY = "image"
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "colour_space")
-    FUNCTION = "load"
-    DESCRIPTION = ("Loads a TIFF at full 8- or 16-bit precision (ComfyUI's Load Image reduces everything "
-                   "to 8-bit) and reports the embedded colour profile. Put .tif files in ComfyUI/input.")
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        input_dir = folder_paths.get_input_directory()
-        files = [f for f in os.listdir(input_dir)
-                 if os.path.isfile(os.path.join(input_dir, f)) and f.lower().endswith((".tif", ".tiff"))]
-        return {"required": {"image": (sorted(files), {"image_upload": True})}}
-
-    def load(self, image):
-        import torch
-        path = folder_paths.get_annotated_filepath(image)
-        arr, bits, icc = read_tiff(path)
-        name = _profile_name(icc)
-        space = _guess_space(name)
-        h, w = arr.shape[:2]
-        print(f"[Load 16-bit TIFF] {image}: {w}x{h}, {bits}-bit, profile: {name or 'none embedded'}")
-        if space and space != "sRGB":
-            print(f"[Load 16-bit TIFF] >> Set 'source_colour_space' on Save TIFF 16-bit to: {space}")
-        elif not space:
-            print("[Load 16-bit TIFF] >> Profile not recognised. Export as ProPhoto RGB, Adobe RGB (1998) or sRGB.")
-        return (torch.from_numpy(arr)[None, ...], space or "unknown")
-
-    @classmethod
-    def IS_CHANGED(cls, image):
-        import hashlib
-        h = hashlib.sha256()
-        with open(folder_paths.get_annotated_filepath(image), "rb") as f:
-            for chunk in iter(lambda: f.read(1 << 20), b""):
-                h.update(chunk)
-        return h.hexdigest()
-
-    @classmethod
-    def VALIDATE_INPUTS(cls, image):
-        if not folder_paths.exists_annotated_filepath(image):
-            return f"Invalid image file: {image}"
-        return True
-
-
-NODE_CLASS_MAPPINGS = {
-    "SaveTIFF16ColourManaged": SaveTIFF16ColourManaged,
-    "LoadImage16bitTIFF": LoadImage16bitTIFF,
-}
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "SaveTIFF16ColourManaged": "Save TIFF 16-bit (Colour Managed)",
-    "LoadImage16bitTIFF": "Load Image 16-bit TIFF",
-}
+NODE_CLASS_MAPPINGS = {"SaveTIFF16ColourManaged": SaveTIFF16ColourManaged}
+NODE_DISPLAY_NAME_MAPPINGS = {"SaveTIFF16ColourManaged": "Save TIFF 16-bit (Colour Managed)"}
