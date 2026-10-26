@@ -4,6 +4,41 @@ A ready-to-run kit for upscaling **AI-generated images** to **exhibition print s
 
 One command sets up a fresh pod. You load the workflow, add your image and press Run.
 
+**What's in this repo**
+
+| File | What it does |
+|---|---|
+| `__init__.py` | **Save TIFF 16-bit (Colour Managed)**, a custom ComfyUI node that saves uncompressed 16-bit TIFFs in ProPhoto RGB, Adobe RGB (1998) or sRGB with the matching ICC profile embedded |
+| `setup.sh` | Installs everything on a new pod: this node, the SeedVR2 node pack and the workflow |
+| `paste_command.md` | The one-line setup command, ready to copy |
+| `workflows/` | The ready-made workflow (see below) |
+
+---
+
+## The workflow
+
+| Workflow | Input | Print (image area, 300 ppi) | Paper and border | resolution | Upscale | Status |
+|---|---|---|---|---|---|---|
+| **SeedVR2_AI to 94cm_res8944** | AI image: **Nano Banana 4K, 5:4** (4608 × 3712), PNG, sRGB | **94 × 75.7 cm** | 110 cm wide (44" roll), 8 cm border | 8944 | 2.4× | ✅ Tested |
+
+**Critical:**
+
+- **For AI-generated images only.** Don't use it for camera photographs. See [Camera photographs](#camera-photographs-use-a-conventional-upscaler).
+- **It assumes Nano Banana's 4K 5:4 shape.** A 16:9 or 1:1 image at 8944 will **not** come out 94 cm wide. See [Choosing the resolution](#choosing-the-resolution).
+- **sRGB in** (PNG, as AI tools output it), **16-bit ProPhoto TIFF out**.
+
+---
+
+## What you get
+
+- A **generative upscale** with SeedVR2 7B, which rebuilds fine detail rather than just enlarging pixels
+- A **16-bit TIFF** with the colour converted correctly into ProPhoto RGB (or Adobe RGB) and the profile embedded, so it opens correctly in Photoshop, Lightroom and Capture One
+- A small **preview PNG** (¼ size, about 2,775 × 2,236 px) in ComfyUI's Assets panel for a quick check. The full-size result is only saved as the TIFF, which keeps the browser responsive.
+
+Tested: a 4608 × 3712 px image upscaled to **11,102 × 8,944 px** (about 99 MP) in about 1.5 minutes on an RTX PRO 6000. That's a 94 cm wide print at 300 ppi.
+
+---
+
 ## Quick start
 
 ### 1. Start a pod on RunPod
@@ -44,44 +79,11 @@ The first run downloads the models (about 15 GB, a few minutes). Later runs star
 ### 6. Download your files
 
 - **16-bit TIFF (your print master):** **Connect → JupyterLab**, open **runpod-slim → ComfyUI → output**, right-click the `.tif` and choose **Download**. It doesn't appear in ComfyUI's Assets panel.
-- **PNG backup:** in ComfyUI's **Assets** panel.
+- **Preview PNG** (¼ size, for checking only): in ComfyUI's **Assets** panel.
 
 ### 7. Stop the pod
 
 **Stop the pod when you're finished.** You're billed for every minute it's running.
-
-**What's in this repo**
-
-| File | What it does |
-|---|---|
-| `__init__.py` | **Save TIFF 16-bit (Colour Managed)**, a custom ComfyUI node that saves uncompressed 16-bit TIFFs in ProPhoto RGB, Adobe RGB (1998) or sRGB with the matching ICC profile embedded |
-| `setup.sh` | Installs everything on a new pod: this node, the SeedVR2 node pack and the workflow |
-| `paste_command.md` | The one-line setup command, ready to copy |
-| `workflows/` | The ready-made workflow (see below) |
-
----
-
-## The workflow
-
-| Workflow | Input | Print (image area, 300 ppi) | Paper and border | resolution | Upscale | Status |
-|---|---|---|---|---|---|---|
-| **SeedVR2_AI to 94cm_res8944** | AI image: **Nano Banana 4K, 5:4** (4608 × 3712), PNG, sRGB | **94 × 75.7 cm** | 110 cm wide (44" roll), 8 cm border | 8944 | 2.4× | ✅ Tested |
-
-**Critical:**
-
-- **For AI-generated images only.** Don't use it for camera photographs. See [Camera photographs](#camera-photographs-use-a-conventional-upscaler).
-- **It assumes Nano Banana's 4K 5:4 shape.** A 16:9 or 1:1 image at 8944 will **not** come out 94 cm wide. See [Choosing the resolution](#choosing-the-resolution).
-- **sRGB in** (PNG, as AI tools output it), **16-bit ProPhoto TIFF out**.
-
----
-
-## What you get
-
-- A **generative upscale** with SeedVR2 7B, which rebuilds fine detail rather than just enlarging pixels
-- A **16-bit TIFF** with the colour converted correctly into ProPhoto RGB (or Adobe RGB) and the profile embedded, so it opens correctly in Photoshop, Lightroom and Capture One
-- An **8-bit PNG backup** that appears in ComfyUI's Assets panel for quick checking and download
-
-Tested: a 4608 × 3712 px image upscaled to **11,102 × 8,944 px** (about 99 MP) in about 1.5 minutes on an RTX PRO 6000. That's a 94 cm wide print at 300 ppi.
 
 ---
 
@@ -204,7 +206,25 @@ Converting sRGB to ProPhoto doesn't add colours that weren't in the original. It
 | Out of memory | Drop VAE tile size to 512, then raise blocks_to_swap to 16–20, or use a lower resolution |
 | Save node stays green with no progress bar | It's working. Large TIFFs take 15–30 seconds to convert and write. Check the log for `[Save TIFF 16-bit] Saved` |
 | TIFF isn't in Assets | That's expected. Download it from JupyterLab (step 6) |
+| ComfyUI becomes very slow | Close the browser tab and reopen it, clear the **Job Queue** history, then click **Unload Models** and **Free model and node cache** (the icons next to Manager). If it's still slow: **Manager → Restart**, or restart the pod from RunPod (your files in `/workspace` are kept) |
+| Running out of disk space | Each result is about 600 MB. Download finished TIFFs from JupyterLab and delete them from `output` as you go |
 | Colours look flat | The input wasn't sRGB (see Colour management), or you're viewing it in an app that ignores ICC profiles |
+
+---
+
+## Running several images
+
+You don't need a new workflow for each image. Use the **queue**:
+
+1. Upload all your images first. JupyterLab is quickest for several: drop them into `runpod-slim → ComfyUI → input`, then refresh ComfyUI.
+2. In **Load Image**, pick the first image and click **Run**.
+3. Straight away, pick the next image and click **Run** again. Repeat for each image.
+
+Each click queues a separate job with the image that was selected at that moment. Jobs run one after another, and files are numbered automatically, so nothing is overwritten. Watch progress in the **Job Queue** panel.
+
+**Faster batches:** set **cache_model** to **true** on both SeedVR2 loaders, so the model stays loaded between jobs. If that causes an out-of-memory error, set it back to false.
+
+> Don't use nodes that combine several images into one *batch*. SeedVR2 treats a batch as video frames and blends them together.
 
 ---
 
