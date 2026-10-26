@@ -1,8 +1,8 @@
 {
   "id": "5eb9d9a7-e600-42f4-967f-2ef2306036f2",
   "revision": 0,
-  "last_node_id": 10,
-  "last_link_id": 13,
+  "last_node_id": 11,
+  "last_link_id": 14,
   "nodes": [
     {
       "id": 4,
@@ -282,21 +282,21 @@
       "id": 10,
       "type": "SaveImage",
       "pos": [
-        1804.9887840576177,
+        2104.9887840576175,
         1461.3489286621111
       ],
       "size": [
-        330,
-        270
+        300,
+        300
       ],
       "flags": {},
-      "order": 5,
+      "order": 6,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 13
+          "link": 14
         }
       ],
       "outputs": [],
@@ -306,7 +306,46 @@
         "Node name for S&R": "SaveImage"
       },
       "widgets_values": [
-        "AI_94cm_PNG_backup"
+        "AI_94cm_preview"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "ImageScaleBy",
+      "pos": [
+        1804.9887840576177,
+        1461.3489286621111
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "ImageScaleBy"
+      },
+      "widgets_values": [
+        "area",
+        0.25
       ]
     }
   ],
@@ -347,6 +386,14 @@
       13,
       3,
       0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      11,
+      0,
       10,
       0,
       "IMAGE"
@@ -383,8 +430,8 @@
       "bounding": [
         1303.9998779296875,
         1161.0666870117188,
-        952.6666259765625,
-        610.2822416503923
+        1140.98890612793,
+        640.2822416503923
       ],
       "color": "#3f789e",
       "flags": {}
