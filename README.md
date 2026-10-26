@@ -3,6 +3,9 @@
 A ready-to-run kit for upscaling **AI-generated images** to **exhibition print size** with [SeedVR2](https://github.com/ByteDance-Seed/SeedVR) in ComfyUI on a rented [RunPod](https://www.runpod.io) GPU, then saving a **16-bit, colour-managed TIFF** ready for Photoshop and fine art printing.
 
 One command sets up a fresh pod. You load the workflow, add your image and press Run.
+
+> **For AI-generated images only** (made for Nano Banana 4K, 5:4). Not for camera photographs. See [The workflow](#the-workflow) for what it expects.
+
 ## Quick start
 
 ### 1. Start a pod on RunPod
@@ -51,7 +54,7 @@ The first run downloads the models (about 15 GB, a few minutes). Later runs star
 
 ---
 
-### **What's in this repo**
+## What's in this repo
 
 | File | What it does |
 |---|---|
@@ -84,7 +87,6 @@ The first run downloads the models (about 15 GB, a few minutes). Later runs star
 
 Tested: a 4608 × 3712 px image upscaled to **11,102 × 8,944 px** (about 99 MP) in about 1.5 minutes on an RTX PRO 6000. That's a 94 cm wide print at 300 ppi.
 
----
 ---
 
 ## Choosing the resolution
