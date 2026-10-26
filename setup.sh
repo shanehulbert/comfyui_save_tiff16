@@ -52,7 +52,8 @@ if [ -n "${NTFY_TOPIC:-}" ]; then
   cat > "$W" <<'WEOF'
 #!/bin/bash
 # Watches ComfyUI's queue; sends one ntfy message each time it goes from busy to empty.
-TOPIC="$1"; SERVER="$2"; PORT="${3:-8188}"; busy=0
+TOPIC="$1"; SERVER="$2"; PORT="${3:-8188}"; LOG="${4:-/dev/null}"; busy=0; last=""
+echo "$(date +%H:%M:%S)  Watcher started - waiting for jobs (Ctrl+C here only stops this view)" >> "$LOG"
 while true; do
   n=$(curl -s --max-time 10 "http://127.0.0.1:$PORT/queue" | python3 -c "
 import sys, json
@@ -60,6 +61,9 @@ try:
     d = json.load(sys.stdin); print(len(d.get('queue_running', [])) + len(d.get('queue_pending', [])))
 except Exception:
     print(-1)")
+  if [ "$n" != "$last" ] && [ "$n" -ge 0 ] 2>/dev/null; then
+    echo "$(date +%H:%M:%S)  jobs left: $n" >> "$LOG"; last="$n"
+  fi
   if [ "$n" -gt 0 ] 2>/dev/null; then
     busy=1
   elif [ "$n" = "0" ] && [ "$busy" = "1" ]; then
@@ -67,24 +71,35 @@ except Exception:
     curl -s --max-time 15 -H "Title: ComfyUI finished" -H "Tags: white_check_mark" \
       -d "Queue complete on RunPod. Download your TIFFs from JupyterLab, then stop the pod." \
       "$SERVER/$TOPIC" >/dev/null
+    echo "$(date +%H:%M:%S)  ALL DONE - notification sent" >> "$LOG"
   fi
   sleep "${NTFY_INTERVAL:-20}"
 done
 WEOF
   PIDF="$COMFY/user/ntfy_watch.pid"
+  LOGF="$COMFY/user/ntfy_watch.log"
+  : > "$LOGF"
   if [ -f "$PIDF" ]; then kill "$(cat "$PIDF")" 2>/dev/null || true; fi   # replace an old watcher
   if command -v setsid >/dev/null 2>&1; then
-    setsid nohup bash "$W" "$NTFY_TOPIC" "$NTFY_SERVER" </dev/null >/dev/null 2>&1 &
+    setsid nohup bash "$W" "$NTFY_TOPIC" "$NTFY_SERVER" 8188 "$LOGF" </dev/null >/dev/null 2>&1 &
   else
-    nohup bash "$W" "$NTFY_TOPIC" "$NTFY_SERVER" </dev/null >/dev/null 2>&1 &
+    nohup bash "$W" "$NTFY_TOPIC" "$NTFY_SERVER" 8188 "$LOGF" </dev/null >/dev/null 2>&1 &
   fi
   echo $! > "$PIDF"
   curl -s --max-time 15 -H "Title: RunPod notifier on" \
     -d "You'll get a message here each time ComfyUI finishes its queue." \
     "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null || true
   echo ">> Phone notifications on (ntfy topic: $NTFY_TOPIC)"
+  echo ">> Live countdown any time:  tail -f $LOGF"
 fi
 
 echo ""
 echo "DONE. In ComfyUI: Manager > Restart, then refresh the browser."
 echo "SeedVR2 models download automatically on the first run (~16GB)."
+
+# With notifications on, stay in this terminal and show the live countdown
+if [ -n "${NTFY_TOPIC:-}" ] && [ -f "$LOGF" ]; then
+  echo ""
+  echo "--- Live countdown (Ctrl+C stops watching; phone notifications keep running) ---"
+  exec tail -n +1 -f "$LOGF"
+fi

@@ -245,6 +245,12 @@ curl -sL https://raw.githubusercontent.com/shanehulbert/comfyui_save_tiff16/main
 
 You'll get a **"RunPod notifier on"** message straight away. After that, you'll get **"ComfyUI finished"** each time the queue empties, whether that's one image or a whole batch. It runs in the background, keeps working if you close JupyterLab, and stops when the pod stops. Running the command again replaces the old notifier rather than adding a second one.
 
+**Live countdown:** with notifications on, the terminal switches straight into a live countdown after **DONE** (e.g. `jobs left: 3`, `jobs left: 2` … `ALL DONE`). Press **Ctrl+C** to stop watching. That only closes the view, and the notifier keeps running. To bring the countdown back later, run:
+
+```bash
+tail -f /workspace/runpod-slim/ComfyUI/user/ntfy_watch.log
+```
+
 ---
 
 ## Updating an existing pod
