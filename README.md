@@ -49,7 +49,9 @@ The first run downloads the models (about 15 GB, a few minutes). Later runs star
 
 **Stop the pod when you're finished.** You're billed for every minute it's running.
 
-**What's in this repo**
+---
+
+### **What's in this repo**
 
 | File | What it does |
 |---|---|
