@@ -20,7 +20,7 @@ One command sets up a fresh pod. You load the workflow, add your image and press
 On the pod, click **Connect → JupyterLab**, then **File → New → Terminal**. Paste this and press Enter:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | bash
+curl -sL https://raw.githubusercontent.com/shanehulbert/comfyui_save_tiff16/main/setup.sh | bash
 ```
 
 Wait until it prints **DONE**.
@@ -240,7 +240,7 @@ Get a message on your phone each time ComfyUI finishes everything in its queue, 
 2. Start the setup command with `NTFY_TOPIC=your-topic` in front of `bash`:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
+curl -sL https://raw.githubusercontent.com/shanehulbert/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
 ```
 
 You'll get a **"RunPod notifier on"** message straight away. After that, you'll get **"ComfyUI finished"** each time the queue empties, whether that's one image or a whole batch. It runs in the background, keeps working if you close JupyterLab, and stops when the pod stops. Running the command again replaces the old notifier rather than adding a second one.

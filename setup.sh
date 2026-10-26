@@ -3,13 +3,13 @@
 # RunPod ComfyUI setup — Shane's SeedVR2 print upscaling kit
 # Installs: Save TIFF 16-bit node, SeedVR2 node pack, saved workflows
 # Run in the pod's terminal:
-#   curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | bash
+#   curl -sL https://raw.githubusercontent.com/shanehulbert/comfyui_save_tiff16/main/setup.sh | bash
 # With phone notifications (ntfy.sh app, your own unique topic):
-#   curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
+#   curl -sL https://raw.githubusercontent.com/shanehulbert/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
 # ------------------------------------------------------------------
 set -e
 
-REPO="https://github.com/cryptozeiss/comfyui_save_tiff16"
+REPO="https://github.com/shanehulbert/comfyui_save_tiff16"
 
 # 1. Find ComfyUI (location differs between RunPod templates)
 CN="$(find / -maxdepth 5 -type d -path '*/ComfyUI/custom_nodes' 2>/dev/null | head -1)"
