@@ -13,4 +13,14 @@ When it prints **DONE**:
 
 Use the same command to update a pod that's already set up.
 
+## With phone notifications (optional)
+
+Install the **ntfy** app, subscribe to your own unique topic, then use this version instead, with your topic in place of `your-topic`:
+
+```bash
+curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
+```
+
+You'll get a message each time ComfyUI finishes its queue. See the [README](README.md#phone-notifications-optional) for details.
+
 Full instructions are in the [README](README.md).

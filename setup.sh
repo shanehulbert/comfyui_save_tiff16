@@ -4,6 +4,8 @@
 # Installs: Save TIFF 16-bit node, SeedVR2 node pack, saved workflows
 # Run in the pod's terminal:
 #   curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | bash
+# With phone notifications (ntfy.sh app, your own unique topic):
+#   curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
 # ------------------------------------------------------------------
 set -e
 
@@ -40,6 +42,47 @@ if ls comfyui_save_tiff16/workflows/*.json >/dev/null 2>&1; then
   mkdir -p "$COMFY/user/default/workflows"
   cp comfyui_save_tiff16/workflows/*.json "$COMFY/user/default/workflows/"
   echo ">> Workflows copied to the Workflows sidebar"
+fi
+
+# 6. Optional: phone notification each time the ComfyUI queue finishes (ntfy.sh)
+#    Turn on by starting the setup command with NTFY_TOPIC=your-topic
+if [ -n "${NTFY_TOPIC:-}" ]; then
+  NTFY_SERVER="${NTFY_SERVER:-https://ntfy.sh}"
+  W="$COMFY/user/ntfy_watch.sh"
+  cat > "$W" <<'WEOF'
+#!/bin/bash
+# Watches ComfyUI's queue; sends one ntfy message each time it goes from busy to empty.
+TOPIC="$1"; SERVER="$2"; PORT="${3:-8188}"; busy=0
+while true; do
+  n=$(curl -s --max-time 10 "http://127.0.0.1:$PORT/queue" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin); print(len(d.get('queue_running', [])) + len(d.get('queue_pending', [])))
+except Exception:
+    print(-1)")
+  if [ "$n" -gt 0 ] 2>/dev/null; then
+    busy=1
+  elif [ "$n" = "0" ] && [ "$busy" = "1" ]; then
+    busy=0
+    curl -s --max-time 15 -H "Title: ComfyUI finished" -H "Tags: white_check_mark" \
+      -d "Queue complete on RunPod. Download your TIFFs from JupyterLab, then stop the pod." \
+      "$SERVER/$TOPIC" >/dev/null
+  fi
+  sleep "${NTFY_INTERVAL:-20}"
+done
+WEOF
+  PIDF="$COMFY/user/ntfy_watch.pid"
+  if [ -f "$PIDF" ]; then kill "$(cat "$PIDF")" 2>/dev/null || true; fi   # replace an old watcher
+  if command -v setsid >/dev/null 2>&1; then
+    setsid nohup bash "$W" "$NTFY_TOPIC" "$NTFY_SERVER" </dev/null >/dev/null 2>&1 &
+  else
+    nohup bash "$W" "$NTFY_TOPIC" "$NTFY_SERVER" </dev/null >/dev/null 2>&1 &
+  fi
+  echo $! > "$PIDF"
+  curl -s --max-time 15 -H "Title: RunPod notifier on" \
+    -d "You'll get a message here each time ComfyUI finishes its queue." \
+    "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null || true
+  echo ">> Phone notifications on (ntfy topic: $NTFY_TOPIC)"
 fi
 
 echo ""

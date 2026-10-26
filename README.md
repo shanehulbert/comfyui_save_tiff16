@@ -25,6 +25,8 @@ curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/
 
 Wait until it prints **DONE**.
 
+> **Optional:** get a phone notification each time a batch finishes. See [Phone notifications](#phone-notifications-optional).
+
 ### 3. Restart ComfyUI
 
 Open ComfyUI (**Connect → ComfyUI**, port 8188), click **Manager → Restart**, wait about 30 seconds, then refresh the browser.
@@ -227,6 +229,21 @@ Each click queues a separate job with the image that was selected at that moment
 **Faster batches:** set **cache_model** to **true** on both SeedVR2 loaders, so the model stays loaded between jobs. If that causes an out-of-memory error, set it back to false.
 
 > Don't use nodes that combine several images into one *batch*. SeedVR2 treats a batch as video frames and blends them together.
+
+---
+
+## Phone notifications (optional)
+
+Get a message on your phone each time ComfyUI finishes everything in its queue, so you don't have to watch it.
+
+1. Install the free **ntfy** app (iPhone or Android) and **subscribe to a topic**. Make up a name that only you would use, e.g. `jsmith-comfy-x7k2`. Anyone who knows the name can see your messages, so don't use something obvious.
+2. Start the setup command with `NTFY_TOPIC=your-topic` in front of `bash`:
+
+```bash
+curl -sL https://raw.githubusercontent.com/cryptozeiss/comfyui_save_tiff16/main/setup.sh | NTFY_TOPIC=your-topic bash
+```
+
+You'll get a **"RunPod notifier on"** message straight away. After that, you'll get **"ComfyUI finished"** each time the queue empties, whether that's one image or a whole batch. It runs in the background, keeps working if you close JupyterLab, and stops when the pod stops. Running the command again replaces the old notifier rather than adding a second one.
 
 ---
 
